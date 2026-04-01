@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazonアフィリエイト HTML生成ツール</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: #111;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .card h2 {
+      font-size: .85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #888;
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: .875rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: #444;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-family: inherit;
+      transition: border-color .15s;
+      background: #fafafa;
+    }
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: #f90;
+      background: #fff;
+    }
+    .field { margin-bottom: 14px; }
+    .asin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    textarea { resize: vertical; }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .row .field { flex: 1; margin-bottom: 0; }
+    button {
+      padding: 9px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: .875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      white-space: nowrap;
+    }
+    button:active { transform: scale(.97); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-ai {
+      background: #232f3e;
+      color: #f90;
+    }
+    .btn-generate {
+      background: #f90;
+      color: #111;
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      margin-top: 4px;
+    }
+    .btn-copy {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .output-header label { margin-bottom: 0; }
+    #outputHtml {
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: .8rem;
+      min-height: 160px;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-color: #313244;
+      cursor: pointer;
+    }
+    #outputHtml:focus { border-color: #89b4fa; }
+    .status {
+      font-size: .8rem;
+      color: #888;
+      margin-top: 6px;
+      min-height: 1.2em;
+    }
+    .status.error { color: #c0392b; }
+    .status.success { color: #27ae60; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Amazonアフィリエイト HTML生成ツール</h1>
+
+  <!-- 書籍情報 -->
+  <div class="card">
+    <h2>書籍情報</h2>
+
+    <div class="field">
+      <label for="title">本のタイトル</label>
+      <input type="text" id="title" placeholder="例：エッセンシャル思考">
+    </div>
+
+    <div class="asin-grid">
+      <div class="field">
+        <label for="asinBook">書籍 ASIN</label>
+        <input type="text" id="asinBook" placeholder="例：4761272031">
+      </div>
+      <div class="field">
+        <label for="asinKindle">Kindle ASIN</label>
+        <input type="text" id="asinKindle" placeholder="例：B00K9Q4QBQ">
+      </div>
+      <div class="field">
+        <label for="asinAudible">Audible ASIN</label>
+        <input type="text" id="asinAudible" placeholder="例：B08XYZ1234">
+      </div>
+    </div>
+  </div>
+
+  <!-- こんな人に -->
+  <div class="card">
+    <h2>こんな人に</h2>
+    <div class="row">
+      <div class="field">
+        <label for="target">テキスト</label>
+        <textarea id="target" rows="2" placeholder="例：長期投資を始めたい / 暴落でブレたくない / 仕組みで資産を増やしたい"></textarea>
+      </div>
+    </div>
+    <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+      <button class="btn-ai" id="btnAI" onclick="generateTarget()">✦ AI生成</button>
+    </div>
+    <div class="status" id="aiStatus"></div>
+  </div>
+
+  <!-- 生成 -->
+  <div class="card">
+    <h2>HTML出力</h2>
+    <button class="btn-generate" onclick="generateHtml()">HTMLを生成</button>
+
+    <div style="margin-top:16px;">
+      <div class="output-header">
+        <label for="outputHtml">生成されたHTML（クリックで全選択）</label>
+        <button class="btn-copy" onclick="copyHtml()">コピー</button>
+      </div>
+      <textarea id="outputHtml" rows="10" readonly onclick="this.select()"></textarea>
+      <div class="status" id="copyStatus"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function generateTarget() {
+    const title = document.getElementById('title').value.trim();
+    const btn = document.getElementById('btnAI');
+    const status = document.getElementById('aiStatus');
+
+    if (!title) {
+      status.textContent = 'タイトルを入力してください';
+      status.className = 'status error';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '生成中...';
+    status.textContent = '';
+    status.className = 'status';
+
+    try {
+      const res = await fetch('/generate-target', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'エラーが発生しました');
+      document.getElementById('target').value = json.text;
+      status.textContent = '生成完了';
+      status.className = 'status success';
+    } catch (e) {
+      status.textContent = e.message;
+      status.className = 'status error';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✦ AI生成';
+    }
+  }
+
+  function generateHtml() {
+    const title      = document.getElementById('title').value.trim();
+    const asinBook   = document.getElementById('asinBook').value.trim();
+    const asinKindle = document.getElementById('asinKindle').value.trim();
+    const asinAudible= document.getElementById('asinAudible').value.trim();
+    const target     = document.getElementById('target').value.trim();
+    const tag        = 'hiroposo02-22';
+
+    if (!title) { alert('タイトルを入力してください'); return; }
+
+    const imgAsin = asinBook || asinKindle;
+    const imgUrl  = imgAsin
+      ? `https://images-na.ssl-images-amazon.com/images/P/${imgAsin}.09.LZZZZZZZ.jpg`
+      : '';
+
+    const bookBtn   = asinBook
+      ? `<a href="https://www.amazon.co.jp/dp/${asinBook}?tag=${tag}" target="_blank" rel="noopener" style="display:inline-block;padding:7px 14px;background:#f90;color:#111;font-weight:700;text-decoration:none;border-radius:6px;font-size:14px;">📦 書籍で購入</a>`
+      : '';
+    const kindleBtn = asinKindle
+      ? `<a href="https://www.amazon.co.jp/dp/${asinKindle}?tag=${tag}" target="_blank" rel="noopener" style="display:inline-block;padding:7px 14px;background:#232f3e;color:#f90;font-weight:700;text-decoration:none;border-radius:6px;font-size:14px;">📱 Kindleで読む</a>`
+      : '';
+    const audibleBtn= asinAudible
+      ? `<a href="https://www.amazon.co.jp/dp/${asinAudible}?tag=${tag}" target="_blank" rel="noopener" style="display:inline-block;padding:7px 14px;background:#e8f0fe;color:#1a73e8;font-weight:700;text-decoration:none;border-radius:6px;font-size:14px;">🎧 Audibleで聴く</a>`
+      : '';
+
+    const targetBlock = target
+      ? `\n  <p style="margin:10px 0 6px;font-size:14px;color:#444;">📌 こんな人に：${escHtml(target)}</p>`
+      : '';
+
+    const html = `<!-- ${escHtml(title)} -->
+<div style="border:1px solid #e0e0e0;border-radius:10px;padding:20px;max-width:720px;font-family:sans-serif;background:#fff;">
+  <div style="display:flex;gap:16px;align-items:flex-start;">
+${imgUrl ? `    <a href="https://www.amazon.co.jp/dp/${imgAsin}?tag=${tag}" target="_blank" rel="noopener" style="flex-shrink:0;">
+      <img src="${imgUrl}" alt="${escHtml(title)}" style="width:120px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.15);">
+    </a>` : ''}
+    <div style="flex:1;">
+      <p style="font-weight:700;font-size:14px;margin-bottom:8px;">${escHtml(title)}</p>${targetBlock}
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+        ${kindleBtn}
+        ${bookBtn}
+        ${audibleBtn}
+      </div>
+      <p style="margin-top:10px;font-size:12px;color:#999;">※PR：上のリンクから購入すると運営の励みになります。</p>
+    </div>
+  </div>
+</div>`;
+
+    document.getElementById('outputHtml').value = html;
+  }
+
+  async function copyHtml() {
+    const text = document.getElementById('outputHtml').value;
+    const status = document.getElementById('copyStatus');
+    if (!text) { status.textContent = 'HTMLがありません'; status.className = 'status error'; return; }
+    try {
+      await navigator.clipboard.writeText(text);
+      status.textContent = 'コピーしました ✓';
+      status.className = 'status success';
+      setTimeout(() => { status.textContent = ''; }, 2000);
+    } catch {
+      status.textContent = 'コピーに失敗しました（手動でCtrl+Aしてコピーしてください）';
+      status.className = 'status error';
+    }
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
